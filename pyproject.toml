@@ -1,0 +1,28 @@
+[build-system]
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
+
+[project]
+name = "dsi_bitstream"
+version = "0.1.0"
+requires-python = ">=3.7"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+keywords = ["bitstream", "codes", "compression"]
+authors = [
+  {email = "tommaso.fontana.96@gmail.com"},
+  {name = "Tommaso Fontana"},
+  {email = "sebastiano.vigna@unimi.it"},
+  {name = "Sebastiano Vigna"}
+]
+maintainers = [
+  {name = "Tommaso Fontana", email = "tommaso.fontana.96@gmail.com"}
+]
+
+[project.urls]
+repository = "github.com/zommiommy/dsi-bitstream-py"
+changelog = "github.com/zommiommy/dsi-bitstream-py/blob/master/CHANGELOG.md"
