@@ -24,5 +24,5 @@ maintainers = [
 ]
 
 [project.urls]
-repository = "github.com/zommiommy/dsi-bitstream-py"
-changelog = "github.com/zommiommy/dsi-bitstream-py/blob/master/CHANGELOG.md"
+repository = "http://github.com/zommiommy/dsi-bitstream-py"
+changelog = "http://github.com/zommiommy/dsi-bitstream-py/blob/master/CHANGELOG.md"
