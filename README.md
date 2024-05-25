@@ -5,7 +5,6 @@
 [![Supported Python versions](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://pypi.org/project/ensmallen/#history)
 [![Pypi total project downloads](https://pepy.tech/badge/dsi_bitstream)](https://pepy.tech/badge/dsi_bitstream)
 [![Pypi project](https://badge.fury.io/py/dsi_bitstream.svg)](https://badge.fury.io/py/dsi_bitstream)
-[![Rust stable](https://img.shields.io/badge/rust-nightly-orange)](https://github.com/zommiommy/dsi-bitstream-py)
 
 Python bindings of dsi-bitstream-rs
 
