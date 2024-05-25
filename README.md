@@ -1,5 +1,5 @@
 # dsi-bitstream-py
-![GitHub CI](https://github.com/zommiommy/dsi-bitstream-py/actions/workflows/rust.yml/badge.svg)
+![GitHub CI](https://github.com/zommiommy/dsi-bitstream-py/actions/workflows/test.yml/badge.svg)
 ![license](https://img.shields.io/crates/l/dsi-bitstream)
 [![](https://tokei.rs/b1/github/zommiommy/dsi-bitstream-py?type=Rust,Python)](https://github.com/zommiommy/dsi-bitstream-py)
 [![Supported Python versions](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://pypi.org/project/ensmallen/#history)
