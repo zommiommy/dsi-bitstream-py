@@ -89,6 +89,53 @@ Field-level access is available via properties: `total`, `unary`, `gamma`,
 The array properties (`zeta`, `golomb`, etc.) return a list of bit costs, one
 per parameter value.
 
+### Dynamic code dispatch with `Code`
+
+`Code` wraps the Rust `Codes` enum, letting you select a code at runtime
+and use it to read, write, or compute bit lengths:
+
+```python
+from dsi_bitstream import Code, BitWriterBigEndian, BitReaderBigEndian
+
+code = Code.zeta(3)
+
+w = BitWriterBigEndian("out.bin")
+bits = code.write(w, 42)  # returns number of bits written
+w.flush()
+
+r = BitReaderBigEndian("out.bin")
+val = code.read(r)        # returns 42
+```
+
+Available constructors: `Code.unary()`, `Code.gamma()`, `Code.delta()`,
+`Code.omega()`, `Code.vbyte_le()`, `Code.vbyte_be()`, `Code.zeta(k)`,
+`Code.pi(k)`, `Code.golomb(b)`, `Code.exp_golomb(k)`, `Code.rice(log2_b)`.
+
+Parse from strings: `Code.parse("Zeta(3)")`. Equivalent codes compare equal:
+`Code.zeta(1) == Code.gamma()`. Use `code.canonicalize()` to normalize.
+
+### Code length functions
+
+Compute the bit length of a code for a given value without writing to a stream:
+
+```python
+from dsi_bitstream import len_gamma, len_zeta, len_delta
+
+len_gamma(42)      # 11
+len_zeta(100, 3)   # 11
+len_delta(7)       # 8
+```
+
+Also available: `len_unary`, `len_omega`, `len_pi`, `len_rice`, `len_golomb`,
+`len_exp_golomb`, `len_minimal_binary`.
+
+The same is available via `Code.len()`:
+
+```python
+code = Code.zeta(3)
+code.len(100)  # 11 -- same as len_zeta(100, 3)
+```
+
 ## Building
 
 ### With Nix (recommended)

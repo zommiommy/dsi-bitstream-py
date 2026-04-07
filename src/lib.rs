@@ -337,6 +337,252 @@ impl PyCodesStats {
     }
 }
 
+// --- Code length functions (pure, no stream needed) ---
+
+/// Returns the length in bits of the unary code for `n`.
+#[pyfunction]
+fn len_unary(n: u64) -> usize {
+    n as usize + 1
+}
+
+/// Returns the length in bits of the γ code for `n`.
+#[pyfunction]
+#[pyo3(name = "len_gamma")]
+fn py_len_gamma(n: u64) -> usize {
+    ::dsi_bitstream::codes::len_gamma(n)
+}
+
+/// Returns the length in bits of the δ code for `n`.
+#[pyfunction]
+#[pyo3(name = "len_delta")]
+fn py_len_delta(n: u64) -> usize {
+    ::dsi_bitstream::codes::len_delta(n)
+}
+
+/// Returns the length in bits of the ω code for `n`.
+#[pyfunction]
+#[pyo3(name = "len_omega")]
+fn py_len_omega(n: u64) -> usize {
+    ::dsi_bitstream::codes::len_omega(n)
+}
+
+/// Returns the length in bits of the ζ code for `n` with parameter `k`.
+#[pyfunction]
+#[pyo3(name = "len_zeta")]
+fn py_len_zeta(n: u64, k: usize) -> usize {
+    ::dsi_bitstream::codes::len_zeta(n, k)
+}
+
+/// Returns the length in bits of the π code for `n` with parameter `k`.
+#[pyfunction]
+#[pyo3(name = "len_pi")]
+fn py_len_pi(n: u64, k: usize) -> usize {
+    ::dsi_bitstream::codes::len_pi(n, k)
+}
+
+/// Returns the length in bits of the Rice code for `n` with parameter `log2_b`.
+#[pyfunction]
+#[pyo3(name = "len_rice")]
+fn py_len_rice(n: u64, log2_b: usize) -> usize {
+    ::dsi_bitstream::codes::len_rice(n, log2_b)
+}
+
+/// Returns the length in bits of the Golomb code for `n` with parameter `b`.
+#[pyfunction]
+#[pyo3(name = "len_golomb")]
+fn py_len_golomb(n: u64, b: u64) -> usize {
+    ::dsi_bitstream::codes::len_golomb(n, b)
+}
+
+/// Returns the length in bits of the exponential Golomb code for `n` with parameter `k`.
+#[pyfunction]
+#[pyo3(name = "len_exp_golomb")]
+fn py_len_exp_golomb(n: u64, k: usize) -> usize {
+    ::dsi_bitstream::codes::len_exp_golomb(n, k)
+}
+
+/// Returns the length in bits of the minimal binary code for `n` with upper bound `max`.
+#[pyfunction]
+#[pyo3(name = "len_minimal_binary")]
+fn py_len_minimal_binary(n: u64, max: u64) -> usize {
+    ::dsi_bitstream::codes::len_minimal_binary(n, max)
+}
+
+/// A code descriptor. Wraps the Rust `Codes` enum so you can refer to a
+/// specific instantaneous code by name and optional parameter.
+///
+/// Construct via the named class methods:
+///
+///     c = Code.gamma()
+///     c = Code.zeta(3)
+///
+/// `Code` supports `str()`, `repr()`, `==`, and parsing from strings:
+///
+///     c = Code.parse("Zeta(3)")
+///
+/// Use `len(code, n)` to compute the length of the code for value `n`
+/// without writing to a stream.
+#[pyclass(from_py_object)]
+#[pyo3(name = "Code")]
+#[derive(Clone)]
+pub struct PyCode {
+    inner: Codes,
+}
+
+#[pymethods]
+impl PyCode {
+    // --- Constructors (one per variant) ---
+
+    #[staticmethod]
+    fn unary() -> Self {
+        Self {
+            inner: Codes::Unary,
+        }
+    }
+
+    #[staticmethod]
+    fn gamma() -> Self {
+        Self {
+            inner: Codes::Gamma,
+        }
+    }
+
+    #[staticmethod]
+    fn delta() -> Self {
+        Self {
+            inner: Codes::Delta,
+        }
+    }
+
+    #[staticmethod]
+    fn omega() -> Self {
+        Self {
+            inner: Codes::Omega,
+        }
+    }
+
+    #[staticmethod]
+    fn vbyte_le() -> Self {
+        Self {
+            inner: Codes::VByteLe,
+        }
+    }
+
+    #[staticmethod]
+    fn vbyte_be() -> Self {
+        Self {
+            inner: Codes::VByteBe,
+        }
+    }
+
+    #[staticmethod]
+    fn zeta(k: usize) -> Self {
+        Self {
+            inner: Codes::Zeta(k),
+        }
+    }
+
+    #[staticmethod]
+    fn pi(k: usize) -> Self {
+        Self {
+            inner: Codes::Pi(k),
+        }
+    }
+
+    #[staticmethod]
+    fn golomb(b: u64) -> Self {
+        Self {
+            inner: Codes::Golomb(b),
+        }
+    }
+
+    #[staticmethod]
+    fn exp_golomb(k: usize) -> Self {
+        Self {
+            inner: Codes::ExpGolomb(k),
+        }
+    }
+
+    #[staticmethod]
+    fn rice(log2_b: usize) -> Self {
+        Self {
+            inner: Codes::Rice(log2_b),
+        }
+    }
+
+    /// Parse a code from its string representation (e.g. "Gamma", "Zeta(3)").
+    #[staticmethod]
+    fn parse(s: &str) -> PyResult<Self> {
+        let code: Codes = s
+            .parse()
+            .map_err(|e: CodeError| PyValueError::new_err(e.to_string()))?;
+        Ok(Self { inner: code })
+    }
+
+    /// Return the canonical form of this code.
+    ///
+    /// Equivalent codes collapse: e.g. `Zeta(1)` -> `Gamma`,
+    /// `Rice(0)` -> `Unary`, `Golomb(2**n)` -> `Rice(n)`.
+    fn canonicalize(&self) -> Self {
+        Self {
+            inner: self.inner.canonicalize(),
+        }
+    }
+
+    /// Return the length in bits that `n` would occupy under this code.
+    fn len(&self, n: u64) -> usize {
+        CodeLen::len(&self.inner, n)
+    }
+
+    /// Read a value from the given reader using this code.
+    fn read(&self, reader: &Bound<'_, PyAny>) -> PyResult<u64> {
+        if let Ok(r) = reader.cast::<BitReaderLittleEndian>() {
+            self.inner
+                .read::<LE, _>(&mut r.borrow_mut().reader)
+                .map_err(|e| PyValueError::new_err(e))
+        } else if let Ok(r) = reader.cast::<BitReaderBigEndian>() {
+            self.inner
+                .read::<BE, _>(&mut r.borrow_mut().reader)
+                .map_err(|e| PyValueError::new_err(e))
+        } else {
+            Err(PyValueError::new_err(
+                "expected BitReaderLittleEndian or BitReaderBigEndian",
+            ))
+        }
+    }
+
+    /// Write a value to the given writer using this code.
+    /// Returns the number of bits written.
+    fn write(&self, writer: &Bound<'_, PyAny>, n: u64) -> PyResult<usize> {
+        if let Ok(w) = writer.cast::<BitWriterLittleEndian>() {
+            self.inner
+                .write::<LE, _>(&mut w.borrow_mut().writer, n)
+                .map_err(|e| PyValueError::new_err(e))
+        } else if let Ok(w) = writer.cast::<BitWriterBigEndian>() {
+            self.inner
+                .write::<BE, _>(&mut w.borrow_mut().writer, n)
+                .map_err(|e| PyValueError::new_err(e))
+        } else {
+            Err(PyValueError::new_err(
+                "expected BitWriterLittleEndian or BitWriterBigEndian",
+            ))
+        }
+    }
+
+    fn __str__(&self) -> String {
+        self.inner.to_string()
+    }
+
+    fn __repr__(&self) -> String {
+        format!("Code.parse(\"{}\")", self.inner)
+    }
+
+    fn __eq__(&self, other: &PyCode) -> bool {
+        // Compare canonical forms so equivalent codes are equal.
+        self.inner.canonicalize() == other.inner.canonicalize()
+    }
+}
+
 /// Bindings for dsi-bitstream-rs
 #[pymodule]
 fn dsi_bitstream(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -345,5 +591,16 @@ fn dsi_bitstream(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BitWriterLittleEndian>()?;
     m.add_class::<BitWriterBigEndian>()?;
     m.add_class::<PyCodesStats>()?;
+    m.add_class::<PyCode>()?;
+    m.add_function(wrap_pyfunction!(len_unary, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_gamma, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_delta, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_omega, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_zeta, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_pi, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_rice, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_golomb, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_exp_golomb, m)?)?;
+    m.add_function(wrap_pyfunction!(py_len_minimal_binary, m)?)?;
     Ok(())
 }
