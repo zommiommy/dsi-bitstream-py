@@ -201,6 +201,144 @@ macro_rules! impl_all {
 impl_all!(BitReaderLittleEndian, BitWriterLittleEndian, LE);
 impl_all!(BitReaderBigEndian, BitWriterBigEndian, BE);
 
+/// Analyzes a stream of integers to determine which code provides the best
+/// compression. Feed values via `update` / `update_many`, then inspect
+/// `best_code` or `get_codes`.
+#[pyclass]
+#[pyo3(name = "CodesStats")]
+pub struct PyCodesStats {
+    inner: CodesStats,
+}
+
+#[pymethods]
+impl PyCodesStats {
+    #[new]
+    fn new() -> Self {
+        Self {
+            inner: CodesStats::default(),
+        }
+    }
+
+    /// Record one occurrence of `n`.
+    fn update(&mut self, n: u64) -> u64 {
+        self.inner.update(n)
+    }
+
+    /// Record `count` occurrences of `n`.
+    fn update_many(&mut self, n: u64, count: u64) -> u64 {
+        self.inner.update_many(n, count)
+    }
+
+    /// Return `(code_name, total_bits)` for the best code.
+    fn best_code(&self) -> (String, u64) {
+        let (code, bits) = self.inner.best_code();
+        (code.to_string(), bits)
+    }
+
+    /// Return a list of `(code_name, total_bits)` sorted by ascending bit cost.
+    fn get_codes(&self) -> Vec<(String, u64)> {
+        self.inner
+            .get_codes()
+            .into_iter()
+            .map(|(code, bits)| (code.to_string(), bits))
+            .collect()
+    }
+
+    /// Return the total bits for a given code, or `None` if the code/parameter
+    /// is outside the tracked range.
+    fn bits_for(&self, code_name: &str) -> PyResult<Option<u64>> {
+        let code: Codes = code_name
+            .parse()
+            .map_err(|e: CodeError| PyValueError::new_err(e.to_string()))?;
+        Ok(self.inner.bits_for(code))
+    }
+
+    /// Merge another `CodesStats` into this one.
+    fn add(&mut self, other: &PyCodesStats) {
+        self.inner.add(&other.inner);
+    }
+
+    fn __iadd__(&mut self, other: &PyCodesStats) {
+        self.inner.add(&other.inner);
+    }
+
+    fn __add__(&self, other: &PyCodesStats) -> PyCodesStats {
+        let mut result = self.inner;
+        result.add(&other.inner);
+        PyCodesStats { inner: result }
+    }
+
+    fn __repr__(&self) -> String {
+        let (code, bits) = self.inner.best_code();
+        format!(
+            "CodesStats(total={}, best=({}, {}))",
+            self.inner.total, code, bits
+        )
+    }
+
+    // --- Field accessors ---
+
+    #[getter]
+    fn total(&self) -> u64 {
+        self.inner.total
+    }
+
+    #[getter]
+    fn unary(&self) -> u64 {
+        self.inner.unary
+    }
+
+    #[getter]
+    fn gamma(&self) -> u64 {
+        self.inner.gamma
+    }
+
+    #[getter]
+    fn delta(&self) -> u64 {
+        self.inner.delta
+    }
+
+    #[getter]
+    fn omega(&self) -> u64 {
+        self.inner.omega
+    }
+
+    #[getter]
+    fn vbyte(&self) -> u64 {
+        self.inner.vbyte
+    }
+
+    /// Zeta code costs. Index 0 = zeta_1, index 1 = zeta_2, etc.
+    #[getter]
+    fn zeta(&self) -> Vec<u64> {
+        self.inner.zeta.to_vec()
+    }
+
+    /// Golomb code costs. Index 0 = Golomb(1), index 1 = Golomb(2), etc.
+    #[getter]
+    fn golomb(&self) -> Vec<u64> {
+        self.inner.golomb.to_vec()
+    }
+
+    /// Exponential Golomb code costs. Index 0 = ExpGolomb(0), index 1 = ExpGolomb(1), etc.
+    #[getter]
+    fn exp_golomb(&self) -> Vec<u64> {
+        self.inner.exp_golomb.to_vec()
+    }
+
+    /// Rice code costs. Index 0 = Rice(0), index 1 = Rice(1), etc.
+    #[getter]
+    fn rice(&self) -> Vec<u64> {
+        self.inner.rice.to_vec()
+    }
+
+    /// Pi code costs. Index 0 = Pi(2), index 1 = Pi(3), etc.
+    #[getter]
+    fn pi(&self) -> Vec<u64> {
+        self.inner.pi.to_vec()
+    }
+}
+
 /// Bindings for dsi-bitstream-rs
 #[pymodule]
 fn dsi_bitstream(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -208,5 +346,6 @@ fn dsi_bitstream(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BitReaderBigEndian>()?;
     m.add_class::<BitWriterLittleEndian>()?;
     m.add_class::<BitWriterBigEndian>()?;
+    m.add_class::<PyCodesStats>()?;
     Ok(())
 }
