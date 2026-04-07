@@ -82,9 +82,7 @@ macro_rules! impl_all {
             }
 
             fn read_pi(&mut self, k: usize) -> PyResult<u64> {
-                self.reader
-                    .read_pi(k)
-                    .map_err(|e| PyValueError::new_err(e))
+                self.reader.read_pi(k).map_err(|e| PyValueError::new_err(e))
             }
 
             fn read_exp_golomb(&mut self, k: usize) -> PyResult<u64> {
