@@ -57,21 +57,33 @@ macro_rules! impl_all {
                     .map_err(|e| PyValueError::new_err(e))
             }
 
+            fn read_omega(&mut self) -> PyResult<u64> {
+                self.reader
+                    .read_omega()
+                    .map_err(|e| PyValueError::new_err(e))
+            }
+
             fn read_rice(&mut self, k: usize) -> PyResult<u64> {
                 self.reader
                     .read_rice(k)
                     .map_err(|e| PyValueError::new_err(e))
             }
 
-            fn read_golomb(&mut self, k: u64) -> PyResult<u64> {
+            fn read_golomb(&mut self, b: u64) -> PyResult<u64> {
                 self.reader
-                    .read_golomb(k)
+                    .read_golomb(b)
                     .map_err(|e| PyValueError::new_err(e))
             }
 
-            fn read_zeta(&mut self, k: u64) -> PyResult<u64> {
+            fn read_zeta(&mut self, k: usize) -> PyResult<u64> {
                 self.reader
                     .read_zeta(k)
+                    .map_err(|e| PyValueError::new_err(e))
+            }
+
+            fn read_pi(&mut self, k: usize) -> PyResult<u64> {
+                self.reader
+                    .read_pi(k)
                     .map_err(|e| PyValueError::new_err(e))
             }
 
@@ -137,21 +149,33 @@ macro_rules! impl_all {
                     .map_err(|e| PyValueError::new_err(e))
             }
 
+            fn write_omega(&mut self, value: u64) -> PyResult<usize> {
+                self.writer
+                    .write_omega(value)
+                    .map_err(|e| PyValueError::new_err(e))
+            }
+
             fn write_rice(&mut self, value: u64, k: usize) -> PyResult<usize> {
                 self.writer
                     .write_rice(value, k)
                     .map_err(|e| PyValueError::new_err(e))
             }
 
-            fn write_golomb(&mut self, value: u64, k: u64) -> PyResult<usize> {
+            fn write_golomb(&mut self, value: u64, b: u64) -> PyResult<usize> {
                 self.writer
-                    .write_golomb(value, k)
+                    .write_golomb(value, b)
                     .map_err(|e| PyValueError::new_err(e))
             }
 
-            fn write_zeta(&mut self, value: u64, k: u64) -> PyResult<usize> {
+            fn write_zeta(&mut self, value: u64, k: usize) -> PyResult<usize> {
                 self.writer
                     .write_zeta(value, k)
+                    .map_err(|e| PyValueError::new_err(e))
+            }
+
+            fn write_pi(&mut self, value: u64, k: usize) -> PyResult<usize> {
+                self.writer
+                    .write_pi(value, k)
                     .map_err(|e| PyValueError::new_err(e))
             }
 
