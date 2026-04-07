@@ -1,7 +1,7 @@
 [package]
 name = "dsi-bitstream-py"
-version = "0.4.2"
-edition = "2021"
+version = "0.9.1"
+edition = "2024"
 description = "Python bindings for the Rust implementation of read/write bit streams supporting several types of instantaneous codes"
 repository = "https://github.com/zommiommy/dsi-bitstream-py/"
 license = "Apache-2.0 OR LGPL-2.1-or-later"
@@ -15,5 +15,5 @@ name = "dsi_bitstream"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.21.2", features = ["extension-module", "abi3-py37"] }
-dsi-bitstream = "0.4.2"
+pyo3 = { version = "0.28.3", features = ["extension-module", "abi3-py37"] }
+dsi-bitstream = "0.9.1"
